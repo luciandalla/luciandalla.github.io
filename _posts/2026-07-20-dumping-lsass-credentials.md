@@ -7,7 +7,7 @@ tags: [windows, credential-dumping, lsass, mimikatz, pypykatz, hashcat, post-exp
 
 **LSASS** (Local Security Authority Subsystem Service) is a core Windows process responsible for enforcing security policies, handling user authentication, and storing sensitive credential material in memory.
 
-Dumping LSASS is similar to dumping the SAM database: first, we create a file with the extracted memory dump, and after transferring it to the attack machine, we can crack the credentials offline.
+Dumping LSASS is similar to dumping the SAM database: first, we create a file with the extracted memory dump, and after transferring it to the attack machine. We can crack the credentials offline.
 
 Below are two techniques for dumping LSASS.
 
