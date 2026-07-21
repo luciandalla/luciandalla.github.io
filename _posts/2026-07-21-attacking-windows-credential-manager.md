@@ -28,16 +28,16 @@ Windows stores two types of credentials:
 
 We can use `cmdkey` to enumerate the credentials stored in the current user's profile:
 
-```cmd
+```powershell
 cmdkey /list
 ```
 
-![Enumerating stored credentials with cmdkey](/assets/img/posts/attacking-windows-credential-manager/cmdkey-enum.png){: .normal }
+![Enumerating stored credentials with cmdkey](/assets/img/posts/attacking-windows-credential-manager/cmdkey-enum.png)
 _Enumerating credentials with cmdkey_
 
 The second group of information in the image, `Domain:interactive=SRV01\mcharles`, is a domain credential associated with the user `SRV01\mcharles`. *Interactive* means that the credential is used for interactive logon sessions. Whenever we come across this type of credential, we can use `runas` to impersonate the stored user, like so:
 
-```cmd
+```powershell
 runas /savecred /user:SRV01\mcharles cmd
 ```
 
@@ -50,5 +50,5 @@ privilege::debug
 sekurlsa::credman
 ```
 
-![Extracting credentials from LSASS with mimikatz's sekurlsa module](/assets/img/posts/attacking-windows-credential-manager/mimikatz-credman.png){: .normal }
+![Extracting credentials from LSASS with mimikatz's sekurlsa module](/assets/img/posts/attacking-windows-credential-manager/mimikatz-credman.png)
 _Extracting Credential Manager entries with mimikatz_

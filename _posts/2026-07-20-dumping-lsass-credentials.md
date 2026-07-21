@@ -15,14 +15,14 @@ Below are two techniques for dumping LSASS.
 
 Open Task Manager, select the **Processes** tab, find and right-click on **Local Security Authority Process**, then select **Create dump file**. A file called `lsass.DMP` is created and saved in `%temp%`.
 
-![Creating an LSASS dump file via Task Manager](/assets/img/posts/dumping-lsass-credentials/task-manager-dump.png){: .normal }
+![Creating an LSASS dump file via Task Manager](/assets/img/posts/dumping-lsass-credentials/task-manager-dump.png)
 _Creating a dump file through Task Manager_
 
 ## Method 2: Rundll32.exe & Comsvcs.dll
 
 This method is more flexible because it doesn't require a GUI. However, some antivirus solutions may flag it as malicious. The first step is to discover the `lsass.exe` PID:
 
-```cmd
+```powershell
 tasklist /svc
 ```
 
@@ -48,7 +48,7 @@ On the attack host, we can use **Pypykatz**, a powerful tool that can extract cr
 pypykatz lsa minidump <file.dmp>
 ```
 
-![Extracting credentials from the dump file with pypykatz](/assets/img/posts/dumping-lsass-credentials/pypykatz-execution.png){: .normal }
+![Extracting credentials from the dump file with pypykatz](/assets/img/posts/dumping-lsass-credentials/pypykatz-execution.png)
 _Running pypykatz against the LSASS dump file_
 
 The tool can extract data from different authentication protocols, such as:
@@ -63,5 +63,5 @@ The tool can extract data from different authentication protocols, such as:
 
 After extracting the hash, we can use hashcat to crack it.
 
-![hashcat cracking the extracted hash](/assets/img/posts/dumping-lsass-credentials/hashcat-cracked.png){: .normal }
+![hashcat cracking the extracted hash](/assets/img/posts/dumping-lsass-credentials/hashcat-cracked.png)
 _Password recovered after cracking the extracted hash with hashcat_

