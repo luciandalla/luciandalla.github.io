@@ -4,8 +4,6 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-# Lucian Dalla
-
 Welcome.
 
 My name is **Lucian Dalla**, and I am an Information Technology professional dedicated to cybersecurity, with a strong interest in offensive security, application security, secure software development, and security research.
