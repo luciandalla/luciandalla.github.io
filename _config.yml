@@ -16,7 +16,7 @@ timezone:
 
 title: Lucian Dalla # the main title
 
-tagline: Web App Pentest & Security Research # it will display as the subtitle
+tagline: Pentest/Red Team & Security Research # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   Anotações e writeups sobre pentest web, CTFs e estudo em segurança ofensiva.
