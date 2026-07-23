@@ -49,11 +49,7 @@ findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml *.git *.ps1 *.yml
 - **windows**: extracts Windows-specific credentials, targeting LSA secrets, Credential Manager, and more
 - **wifi**: dumps WiFi credentials
 
-Once LaZagne is installed on the target machine, we can execute the following command to run all included modules:
-
-```cmd
-start LaZagne.exe all
-```
+Once LaZagne is installed on the target machine, we can execute the following command to run all included modules: `start LaZagne.exe all`
 
 ![Extracting stored credentials with LaZagne](/assets/img/posts/credential-hunting-windows/lazagne-execution.png)
 _Extracting credentials with LaZagne_
