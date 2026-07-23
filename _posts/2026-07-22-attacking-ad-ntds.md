@@ -20,7 +20,7 @@ The first step is to research the company and identify its username pattern. Thi
 With a list of potential usernames, we can use [Kerbrute](https://github.com/ropnop/kerbrute) to enumerate valid Active Directory users:
 
 ```bash
-./kerbrute_linux_amd64 userenum --dc <IP> --domain <DOMAIN> <WORDLIST>
+./kerbrute userenum --dc <IP> --domain <DOMAIN> <WORDLIST>
 ```
 
 ![Enumerating valid Active Directory users with Kerbrute](/assets/img/posts/attacking-ad-ntds/kerbrute-userenum.png)
