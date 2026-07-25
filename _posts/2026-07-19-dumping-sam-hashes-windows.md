@@ -1,7 +1,7 @@
 ---
 title: "Dumping SAM Hashes and LSA Secrets on Windows"
 date: 2026-07-19 10:00:00 -0300
-categories: [Conceitos, Windows]
+categories: [Concepts, Windows]
 tags: [windows, credential-dumping, registry, sam, dpapi, post-exploitation, hashcat, netexec]
 ---
 

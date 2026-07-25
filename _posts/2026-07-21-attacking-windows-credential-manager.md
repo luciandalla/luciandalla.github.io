@@ -1,7 +1,7 @@
 ---
 title: "Attacking Windows Credential Manager"
 date: 2026-07-21 10:00:00 -0300
-categories: [Conceitos, Windows]
+categories: [Concepts, Windows]
 tags: [windows, credential-dumping, credential-manager, mimikatz, post-exploitation]
 ---
 

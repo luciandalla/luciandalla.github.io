@@ -1,7 +1,7 @@
 ---
 title: "Attacking Active Directory: Password Attacks and NTDS.dit"
 date: 2026-07-22 10:00:00 -0300
-categories: [Conceitos, Windows]
+categories: [Concepts, Windows]
 tags: [windows, active-directory, ntds, credential-dumping, password-attacks, post-exploitation, netexec, kerbrute]
 ---
 

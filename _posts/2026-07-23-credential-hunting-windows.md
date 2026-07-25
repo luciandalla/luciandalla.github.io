@@ -1,7 +1,7 @@
 ---
 title: "Credential Hunting in Windows"
 date: 2026-07-23 10:00:00 -0300
-categories: [Conceitos, Windows]
+categories: [Concepts, Windows]
 tags: [windows, credential-dumping, credential-hunting, lazagne, findstr, post-exploitation]
 ---
 

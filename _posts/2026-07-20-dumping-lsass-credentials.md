@@ -1,7 +1,7 @@
 ---
 title: "Dumping LSASS Credentials on Windows"
 date: 2026-07-20 10:00:00 -0300
-categories: [Conceitos, Windows]
+categories: [Concepts, Windows]
 tags: [windows, credential-dumping, lsass, mimikatz, pypykatz, hashcat, post-exploitation]
 ---
 
