@@ -1,6 +1,6 @@
 ---
 title: "Credential Hunting on the Network"
-date: 2026-07-30 10:00:00 -0300
+date: 2026-07-29 10:00:00 -0300
 categories: [Concepts, Networking]
 tags: [network, credential-dumping, credential-hunting, wireshark, pcredz, snaffler, powerhuntshares, manspider, netexec]
 ---
