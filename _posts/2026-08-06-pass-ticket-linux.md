@@ -51,7 +51,7 @@ A **ccache** file stores a user's valid Kerberos tickets after authentication an
 
 ```bash
 env | grep -i krb5
-ls -la /tmp | grep krb
+ls -la /tmp | grep krb5
 ```
 
 By inspecting environment variables or searching the `/tmp` directory, attackers can identify active ccache files belonging to logged-in users. If an attacker gains root or other privileged access, they can reuse these valid Kerberos tickets to impersonate users and perform **Pass the Ticket (PtT)** attacks without needing the users' passwords.
