@@ -1,75 +1,77 @@
 ---
-title: "Dumping SAM Hashes and LSA Secrets on Windows"
+title: "Extraindo Hashes do SAM e Segredos LSA no Windows"
 date: 2026-07-19 10:00:00 -0300
-categories: [Concepts, Windows]
+categories: [Conceitos, Windows]
 tags: [windows, credential-dumping, registry, sam, dpapi, post-exploitation, hashcat, netexec]
 ---
 
-With administrative access to a Windows system, we can quickly dump the files associated with the SAM database, transfer them to our attack host, and begin cracking the hashes offline.
+Com acesso administrativo a um sistema Windows, conseguimos extrair rapidamente os arquivos associados ao banco de dados SAM, transferi-los para nossa máquina de ataque e começar a quebrar os hashes offline.
 
-## Registry Hives
+## Hives do Registro
 
-- **HKLM\SAM**: contains the password hashes for local user accounts
-- **HKLM\SYSTEM**: stores the system boot key, which is used to encrypt the SAM database
-- **HKLM\SECURITY**: contains sensitive information used by the Local Security Authority (LSA)
+- **HKLM\SAM**: contém os hashes de senha das contas de usuário locais
+- **HKLM\SYSTEM**: armazena a boot key do sistema, usada para criptografar o banco de dados SAM
+- **HKLM\SECURITY**: contém informações sensíveis usadas pela Local Security Authority (LSA)
 
-## Extracting the Hives Locally
+## Extraindo os Hives Localmente
 
-These hives can be copied using `reg.exe`. This requires **SYSTEM** privileges.
+Esses hives podem ser copiados usando o `reg.exe`. Isso requer privilégios de **SYSTEM**.
 
-```powershell
+```cmd
 reg.exe save hklm\sam C:\sam.save
 reg.exe save hklm\system C:\system.save
 reg.exe save hklm\security C:\security.save
 ```
 
-![Extracting the SAM, SYSTEM and SECURITY hives with reg.exe](/assets/img/posts/dumping-sam-hashes-windows/reg-save.png)
-_Extracting the registry hives locally with reg.exe_
+![Extraindo os hives SAM, SYSTEM e SECURITY com reg.exe](/assets/img/posts/dumping-sam-hashes-windows/reg-save.png)
+_Extraindo os hives do registro localmente com reg.exe_
 
-## Cracking the Hashes
+## Quebrando os Hashes
 
-After moving the files to the attack machine, we can use **Impacket's secretsdump** to dump the hashes:
+Depois de mover os arquivos para a máquina de ataque, podemos usar o **secretsdump do Impacket** para extrair os hashes:
 
 ```bash
 python3 /usr/share/doc/python3-impacket/examples/secretsdump.py \
   -sam sam.save -security security.save -system system.save LOCAL
 ```
 
-It's important to always extract `HKLM\SYSTEM` together with `HKLM\SAM`, because `HKLM\SYSTEM` holds the boot key, which is required to decrypt `HKLM\SAM`.
+É importante sempre extrair o `HKLM\SYSTEM` junto com o `HKLM\SAM`, porque o `HKLM\SYSTEM` guarda a boot key, necessária para descriptografar o
+`HKLM\SAM`.
 
-![Output of secretsdump.py showing the dumped hashes](/assets/img/posts/dumping-sam-hashes-windows/secretsdump-output.png)
-_Dumping the hashes offline with secretsdump_
+![Saída do secretsdump.py mostrando os hashes extraídos](/assets/img/posts/dumping-sam-hashes-windows/secretsdump-output.png)
+_Extraindo os hashes offline com o secretsdump_
 
-Pay attention to the output line `Dumping local SAM hashes (uid:rid:lmhash:nthash)`, which specifies the hash type. We can save the hashes to a file and use hashcat to crack them:
+Preste atenção à linha de saída `Dumping local SAM hashes (uid:rid:lmhash:nthash)`, que especifica o tipo de hash.
+
+Podemos salvar os hashes em um arquivo e usar o hashcat para quebrá-los:
 
 ```bash
 sudo hashcat -m 1000 hashesfile.txt /usr/share/wordlists/rockyou.txt
 ```
 
-![hashcat cracking the extracted NT hashes](/assets/img/posts/dumping-sam-hashes-windows/hashcat-cracked.png)
-_Cracking the extracted hashes with hashcat_
+![hashcat quebrando os hashes NT extraídos](/assets/img/posts/dumping-sam-hashes-windows/hashcat-cracked.png)
+_Quebrando os hashes extraídos com o hashcat_
 
-## HKLM\SECURITY: Cached Domain Credentials and DPAPI
+## HKLM\SECURITY: Credenciais de Domínio em Cache e DPAPI
 
-`HKLM\SECURITY` contains cached domain logon information, specifically in the form of **DCC2** hashes. This hash type, identified as mode `2100` in hashcat, is much slower to crack than NT hashes — it's really difficult to crack within a typical pentest timeframe.
+O `HKLM\SECURITY` contém informações de logon de domínio em cache, especificamente na forma de hashes **DCC2**. Esse tipo de hash, identificado como modo `2100` no hashcat, é muito mais lento de quebrar que hashes NT — é realmente difícil de quebrar dentro do prazo típico de um pentest.
 
-`HKLM\SECURITY` also contains machine and user keys for **DPAPI** (Data Protection Application Programming Interface). It is used to protect data such as autocomplete passwords from Chrome and Internet Explorer, email account passwords, credentials for remote machine connections, and credentials for accessing shared resources, wireless networks, and VPNs.
+O `HKLM\SECURITY` também contém chaves de máquina e de usuário para o **DPAPI** (Data Protection Application Programming Interface). Ele é usado para proteger dados como senhas de preenchimento automático do Chrome e Internet Explorer, senhas de contas de e-mail, credenciais de conexões remotas e credenciais de acesso a recursos compartilhados, redes wireless e VPNs.
 
-We can use `mimikatz.exe` to decrypt this data manually. For example:
+Podemos usar o `mimikatz.exe` para descriptografar esses dados manualmente. Por exemplo:
 
 ```
 dpapi::chrome /in:"C:\Users\bob\AppData\Local\Google\Chrome\User Data\Default\Login Data" unprotect
 ```
 
-## Remote Dumping
+## Extração Remota
 
-With access to credentials that have local administrator privileges, it is possible to dump LSA secrets and the SAM remotely, for example with the following commands:
+Com acesso a credenciais que tenham privilégios de administrador local, é possível extrair os segredos LSA e o SAM remotamente, por exemplo com os seguintes comandos:
 
 ```bash
 netexec smb <ip> --local-auth -u <user> -p <password> --lsa
 netexec smb <ip> --local-auth -u <user> -p <password> --sam
 ```
 
-![netexec extracting LSA secrets remotely](/assets/img/posts/dumping-sam-hashes-windows/netexec-lsa-sam.png)
-_Remote extraction of LSA secrets with netexec_
-
+![netexec extraindo segredos LSA remotamente](/assets/img/posts/dumping-sam-hashes-windows/netexec-lsa-sam.png)
+_Extração remota de segredos LSA com netexec_

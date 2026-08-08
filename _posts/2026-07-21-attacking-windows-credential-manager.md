@@ -1,15 +1,15 @@
 ---
-title: "Attacking Windows Credential Manager"
+title: "Atacando o Windows Credential Manager"
 date: 2026-07-21 10:00:00 -0300
-categories: [Concepts, Windows]
+categories: [Conceitos, Windows]
 tags: [windows, credential-dumping, credential-manager, mimikatz, post-exploitation]
 ---
 
-**Credential Manager** is a feature built into Windows since Windows Server 2008 R2 and Windows 7. It allows users and applications to securely store credentials relevant to other systems and websites.
+O **Credential Manager** é um recurso presente no Windows desde o Windows Server 2008 R2 e o Windows 7. Ele permite que usuários e aplicações armazenem, de forma segura, credenciais relevantes para outros sistemas e sites.
 
-## Where Credentials Are Stored
+## Onde as Credenciais Ficam Armazenadas
 
-Credentials are stored in special encrypted folders on the computer, under the user and system profiles:
+As credenciais ficam armazenadas em pastas criptografadas especiais no computador, sob os perfis de usuário e de sistema:
 
 - `%UserProfile%\AppData\Local\Microsoft\Vault\`
 - `%UserProfile%\AppData\Local\Microsoft\Credentials\`
@@ -17,38 +17,38 @@ Credentials are stored in special encrypted folders on the computer, under the u
 - `%ProgramData%\Microsoft\Vault\`
 - `%SystemRoot%\System32\config\systemprofile\AppData\Roaming\Microsoft\Vault\`
 
-Microsoft often refers to these protected stores as **Credential Lockers** (formerly Windows Vaults). Credential Manager is the user-facing feature/API, while the actual encrypted stores are the vault/locker folders.
+A Microsoft costuma se referir a esses armazenamentos protegidos como **Credential Lockers** (antigamente Windows Vaults). O Credential Manager é o recurso/API voltado ao usuário, enquanto os armazenamentos criptografados de fato são as pastas de vault/locker.
 
-Windows stores two types of credentials:
+O Windows armazena dois tipos de credenciais:
 
 - **Web Credentials**
 - **Windows Credentials**
 
-## Enumerating with cmdkey
+## Enumerando com o cmdkey
 
-We can use `cmdkey` to enumerate the credentials stored in the current user's profile:
+Podemos usar o `cmdkey` para enumerar as credenciais armazenadas no perfil do usuário atual:
 
-```powershell
+```cmd
 cmdkey /list
 ```
 
-![Enumerating stored credentials with cmdkey](/assets/img/posts/attacking-windows-credential-manager/cmdkey-enum.png)
-_Enumerating credentials with cmdkey_
+![Enumerando credenciais armazenadas com o cmdkey](/assets/img/posts/attacking-windows-credential-manager/cmdkey-enum.png)
+_Enumerando credenciais com o cmdkey_
 
-The second group of information in the image, `Domain:interactive=SRV01\mcharles`, is a domain credential associated with the user `SRV01\mcharles`. *Interactive* means that the credential is used for interactive logon sessions. Whenever we come across this type of credential, we can use `runas` to impersonate the stored user, like so:
+O segundo grupo de informação na imagem, `Domain:interactive=SRV01\mcharles`, é uma credencial de domínio associada ao usuário `SRV01\mcharles`. *Interactive* significa que a credencial é usada para sessões de logon interativas. Sempre que encontrarmos esse tipo de credencial, podemos usar o `runas` para nos passarmos pelo usuário armazenado, assim:
 
-```powershell
+```cmd
 runas /savecred /user:SRV01\mcharles cmd
 ```
 
-## Extracting with Mimikatz
+## Extraindo com o Mimikatz
 
-Mimikatz can be used to decrypt stored credentials. There are multiple ways to attack these credentials — we can either dump credentials from memory using the `sekurlsa` module, or we can manually decrypt credentials using the `dpapi` module. For this example, we will target the LSASS process with `sekurlsa`. Remember that these commands must run as admin:
+O Mimikatz pode ser usado para descriptografar credenciais armazenadas. Existem várias formas de atacar essas credenciais — podemos extrair credenciais da memória usando o módulo `sekurlsa`, ou descriptografar credenciais manualmente usando o módulo `dpapi`. Neste exemplo, vamos mirar o processo LSASS com o `sekurlsa`. Lembre-se de que esses comandos precisam rodar como admin:
 
 ```
 privilege::debug
 sekurlsa::credman
 ```
 
-![Extracting credentials from LSASS with mimikatz's sekurlsa module](/assets/img/posts/attacking-windows-credential-manager/mimikatz-credman.png)
-_Extracting Credential Manager entries with mimikatz_
+![Extraindo credenciais do LSASS com o módulo sekurlsa do mimikatz](/assets/img/posts/attacking-windows-credential-manager/mimikatz-credman.png)
+_Extraindo entradas do Credential Manager com o mimikatz_

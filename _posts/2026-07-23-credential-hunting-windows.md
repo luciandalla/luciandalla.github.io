@@ -1,13 +1,13 @@
 ---
-title: "Credential Hunting in Windows"
+title: "Caçando Credenciais no Windows"
 date: 2026-07-23 10:00:00 -0300
-categories: [Concepts, Windows]
+categories: [Conceitos, Windows]
 tags: [windows, credential-dumping, credential-hunting, lazagne, findstr, post-exploitation]
 ---
 
-Once we have access to a target Windows machine, it is important to hunt credentials across the file system. Many operating systems have built-in search features, which make it easy to search documents for passwords. The first step is to ask yourself how the machine's user uses the system, in order to focus the search with clear goals.
+Assim que tivermos acesso a uma máquina Windows alvo, é importante caçar credenciais por todo o sistema de arquivos. Muitos sistemas operacionais têm recursos de busca nativos, que facilitam a procura por senhas em documentos. O primeiro passo é se perguntar como o usuário da máquina usa o sistema, para focar a busca com objetivos claros.
 
-Some key terms can be used in our search:
+Alguns termos-chave podem ser usados na nossa busca:
 
 - `password`
 - `passphrase`
@@ -24,32 +24,32 @@ Some key terms can be used in our search:
 - `login`
 - `credentials`
 
-## Manual Credential Hunting
+## Caça Manual de Credenciais
 
-If we have GUI access, it is natural to start the search using Windows' built-in search feature.
+Se tivermos acesso à interface gráfica, é natural começar a busca usando o recurso de pesquisa nativo do Windows.
 
-![Searching for credential-related files with Windows Search](/assets/img/posts/credential-hunting-windows/windows-search.png)
-_Searching for credentials with Windows' built-in search feature_
+![Buscando arquivos relacionados a credenciais com o Windows Search](/assets/img/posts/credential-hunting-windows/windows-search.png)
+_Buscando credenciais com o recurso de pesquisa nativo do Windows_
 
-We can also use `findstr` to search for patterns across many types of files. Keeping the common key terms in mind, we can use variations of this command to discover credentials on a Windows target:
+Também podemos usar o `findstr` para buscar padrões em vários tipos de arquivo. Tendo em mente os termos-chave comuns, podemos usar variações desse comando para descobrir credenciais num alvo Windows:
 
 ```powershell
 findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml *.git *.ps1 *.yml
 ```
 
-## Discovering with LaZagne
+## Descobrindo com o LaZagne
 
-[LaZagne](https://github.com/AlessandroZ/LaZagne) is made up of modules, each of which targets different software when looking for passwords. Some of the common modules are described below:
+O [LaZagne](https://github.com/AlessandroZ/LaZagne) é composto por módulos, cada um voltado a um software diferente na busca por senhas. Alguns dos módulos mais comuns estão descritos abaixo:
 
-- **browsers**: extracts passwords from various browsers, including Chromium, Firefox, Microsoft Edge, and Opera
-- **chats**: extracts passwords from various chat applications, including Skype
-- **mails**: searches through mailboxes for passwords, including Outlook and Thunderbird
-- **memory**: dumps passwords from memory, targeting KeePass and LSASS
-- **sysadmin**: extracts passwords from the configuration files of various sysadmin tools, like OpenVPN and WinSCP
-- **windows**: extracts Windows-specific credentials, targeting LSA secrets, Credential Manager, and more
-- **wifi**: dumps WiFi credentials
+- **browsers**: extrai senhas de vários navegadores, incluindo Chromium, Firefox, Microsoft Edge e Opera
+- **chats**: extrai senhas de várias aplicações de chat, incluindo Skype
+- **mails**: vasculha caixas de e-mail em busca de senhas, incluindo Outlook e Thunderbird
+- **memory**: extrai senhas da memória, mirando o KeePass e o LSASS
+- **sysadmin**: extrai senhas dos arquivos de configuração de várias ferramentas de sysadmin, como OpenVPN e WinSCP
+- **windows**: extrai credenciais específicas do Windows, mirando segredos LSA, o Credential Manager e mais
+- **wifi**: extrai credenciais de WiFi
 
-Once LaZagne is installed on the target machine, we can execute the following command to run all included modules: `start LaZagne.exe all`
+Assim que o LaZagne estiver instalado na máquina alvo, podemos executar o seguinte comando para rodar todos os módulos incluídos: `start LaZagne.exe all`
 
-![Extracting stored credentials with LaZagne](/assets/img/posts/credential-hunting-windows/lazagne-execution.png)
-_Extracting credentials with LaZagne_
+![Extraindo credenciais armazenadas com o LaZagne](/assets/img/posts/credential-hunting-windows/lazagne-execution.png)
+_Extraindo credenciais com o LaZagne_

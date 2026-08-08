@@ -1,62 +1,61 @@
 ---
-title: "Attacking Active Directory: Password Attacks and NTDS.dit"
+title: "Atacando o Active Directory: Ataques de Senha e o NTDS.dit"
 date: 2026-07-22 10:00:00 -0300
-categories: [Concepts, Windows]
+categories: [Conceitos, Windows]
 tags: [windows, active-directory, ntds, credential-dumping, password-attacks, post-exploitation, netexec, kerbrute]
 ---
 
-Understanding Active Directory (AD) and how to attack it is an essential skill for any penetration tester. Many organizations use Windows across their infrastructure and rely on Active Directory to manage users, computers, and permissions.
+Entender o Active Directory (AD) e como atacá-lo é uma habilidade essencial para qualquer pentester. Muitas organizações usam Windows em toda a sua infraestrutura e dependem do Active Directory para gerenciar usuários, computadores e permissões.
 
-## Dictionary Attack Against Active Directory
+## Ataque de Dicionário Contra o Active Directory
 
-Before launching an attack, it is important to understand the target organization's structure. Performing a dictionary attack without knowing any valid usernames can generate unnecessary noise.
+Antes de lançar um ataque, é importante entender a estrutura da organização alvo. Realizar um ataque de dicionário sem conhecer nenhum usuário válido pode gerar ruído desnecessário.
 
-The first step is to research the company and identify its username pattern. This can often be done by searching for employee accounts associated with the company's domain. After collecting a list of employee names, we can use [Username Anarchy](https://github.com/urbanadventurer/username-anarchy) to generate common username variations based on those names:
+O primeiro passo é pesquisar a empresa e identificar o padrão de nomes de usuário. Isso geralmente pode ser feito procurando contas de funcionários associadas ao domínio da empresa. Depois de coletar uma lista de nomes de funcionários, podemos usar o [Username Anarchy](https://github.com/urbanadventurer/username-anarchy) para gerar variações comuns de nome de usuário a partir desses nomes:
 
 ```bash
 ./username-anarchy -i names.txt
 ```
 
-With a list of potential usernames, we can use [Kerbrute](https://github.com/ropnop/kerbrute) to enumerate valid Active Directory users:
+Com uma lista de possíveis nomes de usuário, podemos usar o [Kerbrute](https://github.com/ropnop/kerbrute) para enumerar usuários válidos do Active Directory:
 
 ```bash
 ./kerbrute userenum --dc <IP> --domain <DOMAIN> <WORDLIST>
 ```
 
-![Enumerating valid Active Directory users with Kerbrute](/assets/img/posts/attacking-ad-ntds/kerbrute-userenum.png)
-_Enumerating valid domain users with Kerbrute_
+![Enumerando usuários válidos do Active Directory com o Kerbrute](/assets/img/posts/attacking-ad-ntds/kerbrute-userenum.png)
+_Enumerando usuários válidos do domínio com o Kerbrute_
 
-Once we have a list of valid users, we can perform a password dictionary
-attack against Active Directory using NetExec:
+Assim que tivermos uma lista de usuários válidos, podemos realizar um ataque de dicionário de senhas contra o Active Directory usando o NetExec:
 
 ```bash
 netexec smb <IP> -u <USER> -p <WORDLIST>
 ```
 
-![NetExec performing a password dictionary attack](/assets/img/posts/attacking-ad-ntds/netexec-password-attack.png)
-_Cracking a valid password with NetExec_
+![NetExec realizando um ataque de dicionário de senhas](/assets/img/posts/attacking-ad-ntds/netexec-password-attack.png)
+_Quebrando uma senha válida com o NetExec_
 
-Be aware that some organizations enforce account lockout policies after a certain number of failed login attempts. However, this is not enabled by default in Active Directory.
+Fique atento que algumas organizações aplicam políticas de bloqueio de conta após um certo número de tentativas de login malsucedidas. Porém, isso não vem habilitado por padrão no Active Directory.
 
-## Capturing NTDS.dit
+## Capturando o NTDS.dit
 
-**NT Directory Services (NTDS)** is the directory service used by Active Directory to organize and manage network resources. The `NTDS.dit` file is the most important database in the domain — it stores domain usernames, password hashes, and other critical directory information. Capturing this file allows us to extract password hashes and crack them offline.
+O **NT Directory Services (NTDS)** é o serviço de diretório usado pelo Active Directory para organizar e gerenciar recursos de rede. O arquivo `NTDS.dit` é o banco de dados mais importante do domínio — ele armazena nomes de usuário do domínio, hashes de senha e outras informações críticas do diretório. Capturar esse arquivo nos permite extrair os hashes de senha e quebrá-los offline.
 
-With a valid username and password, we can connect to the target using Evil-WinRM, which provides a remote PowerShell session:
+Com um nome de usuário e senha válidos, podemos nos conectar ao alvo usando o Evil-WinRM, que fornece uma sessão remota do PowerShell:
 
 ```bash
 evil-winrm -i <IP> -u <USER> -p <PASSWORD>
 ```
 
-Once connected, the first step is to verify the user's privileges using `net localgroup` and `net user <username>`. Administrative or Domain Admin privileges are required to copy the `NTDS.dit` file.
+Depois de conectado, o primeiro passo é verificar os privilégios do usuário usando `net localgroup` e `net user <username>`. Privilégios administrativos ou de Domain Admin são necessários para copiar o arquivo `NTDS.dit`.
 
-We could create a Volume Shadow Copy (VSS) to copy the file, but the fastest way to dump the `NTDS.dit` database is by executing NetExec from the attack machine:
+Poderíamos criar uma Volume Shadow Copy (VSS) para copiar o arquivo, mas a forma mais rápida de extrair o banco de dados `NTDS.dit` é executando o NetExec a partir da máquina de ataque:
 
 ```bash
 netexec smb <IP> -u <USER> -p <PASSWORD> -M ntdsutil
 ```
 
-![Dumping NTDS.dit remotely with NetExec](/assets/img/posts/attacking-ad-ntds/netexec-ntds-dump.png)
-_Dumping the NTDS.dit database remotely with NetExec_
+![Extraindo o NTDS.dit remotamente com o NetExec](/assets/img/posts/attacking-ad-ntds/netexec-ntds-dump.png)
+_Extraindo o banco de dados NTDS.dit remotamente com o NetExec_
 
-Congratulations! You now have the domain password hashes, which can be cracked offline using tools such as Hashcat or John the Ripper.
+Parabéns! Agora você tem os hashes de senha do domínio, que podem ser quebrados offline usando ferramentas como o Hashcat ou o John the Ripper.

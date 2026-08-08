@@ -1,33 +1,33 @@
 ---
-title: "Linux Authentication Process"
+title: "Processo de Autenticação do Linux"
 date: 2026-07-24 10:00:00 -0300
-categories: [Concepts, Linux]
+categories: [Conceitos, Linux]
 tags: [linux, pam, credential-dumping, john-the-ripper, hashcat, post-exploitation]
 ---
 
-Linux-based distributions support various authentication mechanisms. One of the most commonly used is Pluggable Authentication Modules (PAM). This module is typically located in `/usr/lib/x86_64-linux-gnu/security/` and interacts with the `/etc/passwd` and `/etc/shadow` files. The PAM library can also prevent users from reusing old passwords. These previous passwords are stored in the `/etc/security/opasswd` file. Administrator (root) privileges are required to read this file.
+Distribuições baseadas em Linux suportam vários mecanismos de autenticação. Um dos mais usados é o Pluggable Authentication Modules (PAM). Esse módulo geralmente fica localizado em `/usr/lib/x86_64-linux-gnu/security/` e interage com os arquivos `/etc/passwd` e `/etc/shadow`. A biblioteca PAM também pode impedir que usuários reutilizem senhas antigas. Essas senhas anteriores ficam armazenadas no arquivo `/etc/security/opasswd`. Privilégios de administrador (root) são necessários para ler esse arquivo.
 
 ## /etc/passwd
 
-The `/etc/passwd` file contains information about every user on the system. The file is readable by all users. Each row in the file follows the structure `[username]:[password]:[userID]:[groupID]:[GECOS]:[home-directory]:[default-shell]`.
+O arquivo `/etc/passwd` contém informações sobre todos os usuários do sistema. O arquivo é legível por todos os usuários. Cada linha do arquivo segue a estrutura `[username]:[password]:[userID]:[groupID]:[GECOS]:[home-directory]:[default-shell]`.
 
-![Permissions and content of /etc/passwd file](/assets/img/posts/linux-authentication-process/passwd-file.png)
-_Permissions and content of /etc/passwd file_
+![Permissões e conteúdo do arquivo /etc/passwd](/assets/img/posts/linux-authentication-process/passwd-file.png)
+_Permissões e conteúdo do arquivo /etc/passwd_
 
-In rare cases, the file stores the password hashes — this happens only on old systems. Normally, the field is filled with `x`. In modern Linux systems, the password hashes are stored in the `/etc/shadow` file.
+Em casos raros, o arquivo armazena os hashes de senha — isso acontece só em sistemas antigos. Normalmente, o campo vem preenchido com `x`. Em sistemas Linux modernos, os hashes de senha ficam armazenados no arquivo `/etc/shadow`.
 
 ## /etc/shadow
 
-The `/etc/shadow` file is responsible for password storage and management. Every user registered in `/etc/passwd` must have a matching entry in this file, or it will be considered invalid. The file structure is `[username]:[password]:[last-change]:[min-age]:[max-age]:[warning-period]:[inactivity-period]:[expiration-date]:[reserved-field]`.
+O arquivo `/etc/shadow` é responsável pelo armazenamento e gerenciamento de senhas. Todo usuário registrado em `/etc/passwd` precisa ter uma entrada correspondente nesse arquivo, ou será considerado inválido. A estrutura do arquivo é `[username]:[password]:[last-change]:[min-age]:[max-age]:[warning-period]:[inactivity-period]:[expiration-date]:[reserved-field]`.
 
-![Example of data in /etc/shadow file](/assets/img/posts/linux-authentication-process/shadow-file.png)
-_Example of data in /etc/shadow file_
+![Exemplo de dados no arquivo /etc/shadow](/assets/img/posts/linux-authentication-process/shadow-file.png)
+_Exemplo de dados no arquivo /etc/shadow_
 
-If the password field contains a character such as `!` or `*`, the user cannot log in using a Unix password. However, other authentication methods can still be used. If the password field is empty, no password is required for login.
+Se o campo de senha contiver um caractere como `!` ou `*`, o usuário não consegue fazer login usando uma senha Unix. Porém, outros métodos de autenticação ainda podem ser usados. Se o campo de senha estiver vazio, nenhuma senha é exigida para o login.
 
-The password field also follows a particular format, from which we can extract additional information: `$<id>$<salt>$<hashed>`. The `id` specifies which cryptographic hash algorithm was used:
+O campo de senha também segue um formato específico, do qual conseguimos extrair informações adicionais: `$<id>$<salt>$<hashed>`. O `id` especifica qual algoritmo criptográfico de hash foi usado:
 
-| ID | Algorithm |
+| ID | Algoritmo |
 |----|-----------|
 | `1` | MD5 |
 | `2a` | Blowfish |
@@ -38,17 +38,17 @@ The password field also follows a particular format, from which we can extract a
 | `gy` | Gost-yescrypt |
 | `7` | Scrypt |
 
-## Cracking Linux Credentials
+## Quebrando Credenciais do Linux
 
-Once we have root access on a Linux machine, we can gather user password hashes and attempt to crack them using various methods to recover the plaintext passwords.
+Assim que tivermos acesso root numa máquina Linux, podemos coletar os hashes de senha dos usuários e tentar quebrá-los usando vários métodos para recuperar as senhas em texto plano.
 
-To do this, we can use a tool called `unshadow`, which is included with John the Ripper (JtR). It works by combining the `/etc/passwd` and `/etc/shadow` files into a single file suitable for cracking:
+Para isso, podemos usar uma ferramenta chamada `unshadow`, que já vem incluída no John the Ripper (JtR). Ela funciona combinando os arquivos `/etc/passwd` e `/etc/shadow` num único arquivo adequado para a quebra:
 
 ```bash
 sudo unshadow /etc/passwd /etc/shadow > /tmp/unshadowed.hashes
 ```
 
-With the unshadowed file ready, we can crack it using Hashcat or another tool:
+Com o arquivo unshadowed pronto, podemos quebrá-lo usando o Hashcat ou outra ferramenta:
 
 ```bash
 hashcat -m 1800 -a 0 /tmp/unshadowed.hashes rockyou.txt -o /tmp/unshadowed.cracked

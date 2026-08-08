@@ -4,141 +4,49 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-Welcome.
+Bem-vindo.
 
-My name is **Lucian Dalla**, and I am an Information Technology professional dedicated to cybersecurity, with a strong interest in offensive security, application security, secure software development, and security research.
-
-My academic and professional journey has been built around a single principle: **understanding technology deeply enough to protect it effectively**. Rather than viewing cybersecurity solely as the practice of identifying vulnerabilities, I see it as the discipline of understanding how systems are conceived, how they interact, how they fail, and how they can be engineered to remain resilient in the face of constantly evolving threats.
-
-This website serves as my public knowledge base and technical portfolio, where I document my studies, laboratory exercises, research, projects, tools, write-ups, and technical articles developed throughout my continuous learning journey.
-
-The purpose of this repository is not only to showcase technical knowledge, but also to maintain a transparent record of my evolution as a cybersecurity professional.
+Sou **Lucian Dalla**, profissional de TI dedicado à cibersegurança, com foco em segurança ofensiva, segurança de aplicações e pesquisa em segurança. Este site é meu portfólio técnico e base de conhecimento pública, onde documento estudos, laboratórios, pesquisas, ferramentas e writeups desenvolvidos ao longo da minha jornada de aprendizado — um registro transparente da minha evolução como profissional, não só uma vitrine de conhecimento.
 
 ---
 
-# Professional Experience
+# Experiência Profissional
 
-For nearly five years, I have been working in the cybersecurity area of one of Brazil's largest nationwide financial institutions, contributing to the protection of digital banking channels and customer-facing services.
-
-My daily responsibilities involve protecting critical systems against fraud, abuse, and cyber threats by participating in security monitoring, threat analysis, detection engineering, security automation, and the continuous improvement of defensive controls.
-
-Working in a highly regulated environment has provided extensive experience dealing with large-scale infrastructures, security operations, risk management, incident analysis, and the protection of services that support millions of users.
-
-This practical experience complements my academic background by exposing me daily to real-world security challenges.
+Há quase cinco anos, trabalho na área de cibersegurança de uma das maiores instituições financeiras do Brasil, protegendo canais bancários digitais contra fraude, abuso e ameaças cibernéticas — atuando em monitoramento, análise de ameaças, engenharia de detecção e automação de segurança. Esse ambiente altamente regulado me deu experiência prática com infraestruturas de grande escala e serviços que atendem milhões de usuários, complementando minha formação acadêmica com desafios reais do dia a dia.
 
 ---
 
-# Academic Background
+# Formação Acadêmica
 
-My education combines Computer Science fundamentals with specialized postgraduate studies in multiple cybersecurity disciplines.
+**Graduação**
+- Bacharelado em Ciência da Computação — Universidade Luterana do Brasil (ULBRA)
 
-## Bachelor's Degree
+**Pós-Graduações**
+- Offensive Cyber Security - Red Team Ops — FIAP
+- Segurança da Informação e Forense Digital — Universidade de Uberaba (UNIUBE)
+- Internet das Coisas (IoT) — Universidade de Uberaba (UNIUBE)
 
-- **Bachelor's Degree in Computer Science**
-  - Universidade Luterana do Brasil (ULBRA)
-
-## Postgraduate Studies
-
-- **Offensive Cyber Security**
-  - FIAP
-
-- **Information Security and Digital Forensics**
-  - Universidade de Uberaba (UNIUBE)
-
-- **Internet of Things (IoT)**
-  - Universidade de Uberaba (UNIUBE)
-
-My academic path intentionally spans both offensive and defensive domains, providing a multidisciplinary understanding of software, infrastructure, embedded systems, digital investigations, and secure system design.
+**Certificação**
+- EXIN Information Security Foundation (ISFS)
 
 ---
 
-# Professional Certification
+# Interesses Técnicos
 
-- **EXIN Information Security Foundation (ISFS)**
-
-This certification validates foundational knowledge of information security principles, governance, risk management, security controls, and best practices aligned with international standards.
+Segurança Ofensiva, Web AppSec, Mobile AppSec, Desenvolvimento Seguro de Software, Engenharia Reversa, Threat Intelligence, Segurança de Redes, Linux, Python, DevSecOps, Cloud Security, Engenharia de Detecção e Automação de Segurança.
 
 ---
 
-# Technical Interests
+# O Que Você Vai Encontrar Aqui
 
-Although cybersecurity is an extensive field, my primary interests currently include:
+Este site documenta tanto projetos concluídos quanto aprendizado em andamento — sempre experimentação prática, não só teoria:
 
-- Offensive Security
-- Web Application Security
-- Mobile Application Security
-- Secure Software Development
-- Application Security (AppSec)
-- Reverse Engineering
-- Threat Intelligence
-- Network Security
-- Linux
-- Python
-- DevSecOps
-- Cloud Security
-- Detection Engineering
-- Security Automation
+- 🧪 Laboratórios e provas de conceito
+- 📝 Writeups de segurança e de CTF
+- 🔧 Ferramentas e scripts de automação
+- 🔍 Pesquisa de vulnerabilidades
+- 📖 Estudos e artigos técnicos
 
 ---
 
-# Continuous Learning
-
-I strongly believe cybersecurity is a field where learning never stops.
-
-For this reason, I dedicate a significant portion of my time to:
-
-- Building personal laboratories
-- Solving Capture The Flag (CTF) challenges
-- Researching emerging attack techniques
-- Studying operating systems and networking internals
-- Developing security tools
-- Writing technical documentation
-- Exploring secure software architecture
-- Practicing offensive security methodologies
-- Experimenting with automation using Python
-
-Every project published here represents practical experimentation rather than purely theoretical knowledge.
-
----
-
-# What You'll Find Here
-
-This website documents both successful projects and ongoing learning efforts.
-
-Topics include:
-
-- 📚 Technical studies
-- 🧪 Hands-on labs
-- 📝 Security write-ups
-- 🔧 Open-source tools
-- 💻 Proofs of Concept (PoCs)
-- 🔍 Vulnerability research
-- 📖 Technical articles
-- 🌐 Secure development practices
-- ⚙️ Automation scripts
-- 🧩 Reverse engineering notes
-- 🚩 CTF write-ups
-- 📈 Research projects
-
----
-
-# Philosophy
-
-I believe the best security professionals understand technology from multiple perspectives.
-
-An effective cybersecurity practitioner should not only know how to identify vulnerabilities, but also understand software engineering, operating systems, networking, system architecture, cryptography, cloud infrastructure, and secure development practices.
-
-Security is not merely about breaking systems—it is about understanding them deeply enough to help build them better.
-
-This philosophy guides both my professional career and every study documented in this repository.
-
----
-
-# Connect
-
-This website represents an ongoing technical journal rather than a finished portfolio.
-
-As my knowledge evolves, new research, tools, write-ups, and experiments will continuously be added.
-
-Thank you for visiting.
-
+Acredito que os melhores profissionais de segurança entendem a tecnologia sob múltiplas perspectivas — não só como quebrar sistemas, mas como entendê-los a fundo o suficiente para ajudar a construí-los melhor. Este site é um diário técnico em evolução constante, não um portfólio finalizado. Obrigado pela visita.

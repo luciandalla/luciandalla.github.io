@@ -1,67 +1,66 @@
 ---
-title: "Dumping LSASS Credentials on Windows"
+title: "Extraindo Credenciais do LSASS no Windows"
 date: 2026-07-20 10:00:00 -0300
-categories: [Concepts, Windows]
+categories: [Conceitos, Windows]
 tags: [windows, credential-dumping, lsass, mimikatz, pypykatz, hashcat, post-exploitation]
 ---
 
-**LSASS** (Local Security Authority Subsystem Service) is a core Windows process responsible for enforcing security policies, handling user authentication, and storing sensitive credential material in memory.
+O **LSASS** (Local Security Authority Subsystem Service) é um processo central do Windows responsável por aplicar políticas de segurança, gerenciar a autenticação de usuários e armazenar material sensível de credenciais em memória.
 
-Dumping LSASS is similar to dumping the SAM database: first, we create a file with the extracted memory dump, and after transferring it to the attack machine. We can crack the credentials offline.
+Extrair o LSASS é parecido com extrair o banco de dados SAM: primeiro, criamos um arquivo com o dump de memória extraído e, depois de transferi-lo para a máquina de ataque, conseguimos quebrar as credenciais offline.
 
-Below are two techniques for dumping LSASS.
+Abaixo estão duas técnicas para extrair o LSASS.
 
-## Method 1: Task Manager
+## Método 1: Gerenciador de Tarefas
 
-Open Task Manager, select the **Processes** tab, find and right-click on **Local Security Authority Process**, then select **Create dump file**. A file called `lsass.DMP` is created and saved in `%temp%`.
+Abra o Gerenciador de Tarefas, selecione a aba **Processos**, encontre e clique com o botão direito em **Local Security Authority Process**, e depois selecione **Criar arquivo de despejo**. Um arquivo chamado `lsass.DMP` é criado e salvo em `%temp%`.
 
-![Creating an LSASS dump file via Task Manager](/assets/img/posts/dumping-lsass-credentials/task-manager-dump.png)
-_Creating a dump file through Task Manager_
+![Criando um dump do LSASS pelo Gerenciador de Tarefas](/assets/img/posts/dumping-lsass-credentials/task-manager-dump.png)
+_Criando um arquivo de dump pelo Gerenciador de Tarefas_
 
-## Method 2: Rundll32.exe & Comsvcs.dll
+## Método 2: Rundll32.exe & Comsvcs.dll
 
-This method is more flexible because it doesn't require a GUI. However, some antivirus solutions may flag it as malicious. The first step is to discover the `lsass.exe` PID:
+Esse método é mais flexível porque não exige interface gráfica. Porém, algumas soluções de antivírus podem identificá-lo como malicioso. O primeiro passo é descobrir o PID do `lsass.exe`:
 
 ```powershell
 tasklist /svc
 ```
 
-or, on PowerShell:
+ou, no PowerShell:
 
 ```powershell
 Get-Process lsass
 ```
 
-With an elevated PowerShell session, we can issue the following command to create the dump file:
+Com uma sessão elevada do PowerShell, podemos executar o seguinte comando para criar o arquivo de dump:
 
 ```powershell
 rundll32 C:\windows\system32\comsvcs.dll, MiniDump <PID> C:\lsass.dmp full
 ```
 
-With this command, we run `rundll32.exe` to call an exported function of `comsvcs.dll`, which in turn calls the `MiniDumpWriteDump` (`MiniDump`) function to dump the LSASS process memory to a specified location (`C:\lsass.dmp`).
+Com esse comando, executamos o `rundll32.exe` para chamar uma função exportada da `comsvcs.dll`, que por sua vez chama a função `MiniDumpWriteDump` (`MiniDump`) para despejar a memória do processo LSASS num local específico (`C:\lsass.dmp`).
 
-## Extracting Credentials with Pypykatz
+## Extraindo Credenciais com o Pypykatz
 
-On the attack host, we can use **Pypykatz**, a powerful tool that can extract credentials from the `.dmp` file. Pypykatz is a Python implementation of Mimikatz (which only runs on Windows).
+Na máquina de ataque, podemos usar o **Pypykatz**, uma ferramenta poderosa que consegue extrair credenciais do arquivo `.dmp`. O Pypykatz é uma implementação em Python do Mimikatz (que só roda no Windows).
 
 ```bash
 pypykatz lsa minidump <file.dmp>
 ```
 
-![Extracting credentials from the dump file with pypykatz](/assets/img/posts/dumping-lsass-credentials/pypykatz-execution.png)
-_Running pypykatz against the LSASS dump file_
+![Extraindo credenciais do arquivo de dump com o pypykatz](/assets/img/posts/dumping-lsass-credentials/pypykatz-execution.png)
+_Rodando o pypykatz contra o dump do LSASS_
 
-The tool can extract data from different authentication protocols, such as:
+A ferramenta consegue extrair dados de diferentes protocolos de autenticação, como:
 
-- **MSV**: used by newer Windows versions
-- **WDIGEST**: used by older Windows versions, often storing credentials
-  in plaintext
+- **MSV**: usado por versões mais recentes do Windows
+- **WDIGEST**: usado por versões mais antigas do Windows, frequentemente armazenando credenciais em texto plano
 - **Kerberos**
 - **DPAPI** (masterkey)
 
-## Cracking the Hash
+## Quebrando o Hash
 
-After extracting the hash, we can use hashcat to crack it.
+Depois de extrair o hash, podemos usar o hashcat para quebrá-lo.
 
-![hashcat cracking the extracted hash](/assets/img/posts/dumping-lsass-credentials/hashcat-cracked.png)
-_Password recovered after cracking the extracted hash with hashcat_
+![hashcat quebrando o hash extraído](/assets/img/posts/dumping-lsass-credentials/hashcat-cracked.png)
+_Senha recuperada após quebrar o hash extraído com o hashcat_
