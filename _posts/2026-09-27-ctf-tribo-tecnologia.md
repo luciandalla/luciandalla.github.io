@@ -220,7 +220,7 @@ touch -- "--checkpoint=1"
 touch -- "--checkpoint-action=exec=sh payload.sh"
 ```
 
-![Arquivos de injeção via wildcard criados no diretório de backup](/assets/img/posts/linux-pos-exploracao-ctf-tribo-tecnologia/wildcard-parametro.png)
+![Arquivos de injeção via wildcard criados no diretório de backup](/assets/img/posts/linux-pos-exploracao-ctf-tribo-tecnologia/wildcard-parametros.png)
 _Arquivos `--checkpoint` e `--checkpoint-action` criados para forçar a execução do payload_
 
 ```bash
